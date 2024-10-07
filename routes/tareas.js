@@ -10,7 +10,7 @@ router.post('/', async (req, res) => {
             INSERT INTO tarea (titulo, descripcion)
             VALUES ($1, $2) RETURNING *;
         `;
-        const values = [nombre, descripcion, precio, stock];
+        const values = [titulo, descripcion];
         const result = await pool.query(query, values);
         res.status(201).json(result.rows[0]);
     } catch (err) {

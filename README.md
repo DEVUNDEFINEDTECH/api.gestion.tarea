@@ -1,13 +1,13 @@
-# Tienda Inventario API
+# Gestion de tareas API
 
-Esta es una API REST desarrollada con Node.js, Express y PostgreSQL para gestionar el inventario de una tienda de productos electrónicos. La API permite a los usuarios realizar operaciones CRUD sobre los productos de la tienda, como agregar, actualizar, eliminar y consultar productos.
+Esta es una API REST desarrollada con Node.js, Express y PostgreSQL para gestionar el inventario de una tienda de productos electrónicos. La API permite a los usuarios realizar operaciones CRUD sobre la  gestion de tareas, como agregar, actualizar, eliminar y consultar.
 
 ## Características
 
-- **Insertar** un nuevo producto en el inventario.
-- **Consultar** la lista de productos disponibles.
-- **Actualizar** la información de un producto.
-- **Eliminar** productos del inventario.
+- **Insertar** una nueva tarea o una n ueva persona con usuario.
+- **Consultar** la lista de tareas.
+- **Actualizar** la información de una tarea.
+- **Eliminar** una tarea.
 - **Conexión a la base de datos** PostgreSQL para almacenamiento y gestión de datos.
 
 ## Requisitos Previos
@@ -23,7 +23,7 @@ Asegúrate de tener instalados los siguientes programas antes de comenzar:
 1. Clona este repositorio en tu máquina local:
 
    ```bash
-   git clone https://github.com/tu-usuario/tienda-inventario.git
+   git clone https://github.com/DEVUNDEFINEDTECH/api.gestion.tarea.git
    cd tienda-inventario
 Instala las dependencias del proyecto:
 npm install
@@ -34,60 +34,48 @@ DB_PASSWORD=tu_contraseña
 DB_NAME=tienda_inventario
 DB_PORT=5432
 Crea la base de datos y las tablas necesarias en PostgreSQL ejecutando las siguientes consultas SQL:
-CREATE DATABASE tienda_inventario;
+CREATE DATABASE bd_gestion_tareas;
 
-\c tienda_inventario;
+\c bd_gestion_tareas;
 
-CREATE TABLE producto (
-    id_producto SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    precio NUMERIC(10, 2) NOT NULL,
-    stock INTEGER DEFAULT 0
-);
+CREATE TABLE "persona" (
+  "id_persona" int2 NOT NULL DEFAULT nextval('persona_id_persona_seq'::regclass),
+  "razon_social" text COLLATE "pg_catalog"."default",
+  "nip" varchar(25) COLLATE "pg_catalog"."default",
+  "celular" varchar(15) COLLATE "pg_catalog"."default",
+  "correo" varchar(50) COLLATE "pg_catalog"."default",
+  "direccion" text COLLATE "pg_catalog"."default",
+  "estado_persona" bool DEFAULT true,
+  "fecha_registro_persona" timestamptz(6) DEFAULT now()
+)
+;
+ALTER TABLE "persona" OWNER TO "postgres";
+CREATE TABLE "tarea" (
+  "id_tarea" int2 NOT NULL DEFAULT nextval('tarea_id_tarea_seq'::regclass),
+  "titulo" text COLLATE "pg_catalog"."default",
+  "descripcion" text COLLATE "pg_catalog"."default",
+  "estado_tarea_completa" bool DEFAULT false,
+  "fecha_registro_tarea" timestamptz(6) DEFAULT now(),
+  "estado_tarea" bool DEFAULT true
+)
+;
+ALTER TABLE "tarea" OWNER TO "postgres";
+CREATE TABLE "usuario" (
+  "id_usuario" int2 NOT NULL,
+  "usuario" varchar(255) COLLATE "pg_catalog"."default",
+  "clave" varchar(255) COLLATE "pg_catalog"."default",
+  "estado_usuario" varchar(255) COLLATE "pg_catalog"."default" DEFAULT true,
+  "fecha_registro_usuario" timestamptz(6) DEFAULT now()
+)
+;
+ALTER TABLE "usuario" OWNER TO "postgres";
+BEGIN;
 
 Inicia la aplicación:
 El servidor estará corriendo en http://localhost:3006.
 
 Realiza operaciones CRUD a través de las siguientes rutas:
 
-Agregar un producto: POST /api/productos
-Obtener todos los productos: GET /api/productos
-Actualizar un producto: PUT /api/productos/:id
-Eliminar un producto: DELETE /api/productos/:id
-
-Ejemplos de Uso
-Insertar un nuevo producto (POST)
-URL: /api/productos
-Método: POST
-Cuerpo:
-
-{
-  "nombre": "Laptop Dell",
-  "descripcion": "Laptop de 15 pulgadas",
-  "precio": 750.00,
-  "stock": 20
-}
-
-Consultar productos (GET)
-URL: /api/productos
-Método: GET
-
-Actualizar un producto (PUT)
-URL: /api/productos/:id
-Método: PUT
-Cuerpo:
-
-{
-  "nombre": "Laptop Dell Actualizada",
-  "descripcion": "Laptop de 15 pulgadas con más memoria",
-  "precio": 800.00,
-  "stock": 15
-}
-
-Eliminar un producto (DELETE)
-URL: /api/productos/:id
-Método: DELETE
 
 Dependencias
 Express - Framework web para Node.js

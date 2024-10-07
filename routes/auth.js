@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('../db'); // Conexión a PostgreSQL
 
 // Ruta de registro
-router.post('/register', async (req, res) => {
+router.post('/registrar', async (req, res) => {
     const {razon_social, nip, celular, correo, direccion, usuario, clave} = req.body;
 
     // Verificar si la pesona ya se encuentra registrada
@@ -67,13 +67,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Crear y asignar token
-    const token = jwt.sign({ id: usuario.rows[0].id }, 'secreto', { expiresIn: '1h' });
+    const token = jwt.sign({ id: usuarioExistente.rows[0].id_usuario }, 'secreto', { expiresIn: '1h' });
     res.json({ token });
 });
 
 // Ruta protegida para pruebas (requiere token)
 router.get('/perfil', verificarToken, async (req, res) => {
-    const usuario = await pool.query('SELECT * FROM usuarios WHERE id = $1', [req.usuarioId]);
+    const usuario = await pool.query('SELECT * FROM usuario WHERE id_usuario = $1', [req.usuario_id]);
     res.json(usuario.rows[0]);
 });
 
