@@ -50,6 +50,53 @@ router.post('/registrar', async (req, res) => {
     res.json({ token });
 });
 
+// Hashing de la contraseña
+async function hashPassword(password) {
+     // Encriptar contraseña
+     const salt = await bcrypt.genSalt(12); // Se recomienda usar al menos 12
+    const hashedPassword = await bcrypt.hash(password, salt);
+    return hashedPassword;
+}
+
+// Generar clave
+router.post('/generate_key', verificarToken, async (req, res) => {
+    const { id_persona, usuario, password } = req.body;
+
+    //Se envia a encriptar la clave
+    const hashedPassword = await hashPassword(password);
+
+    // Insertar nuevo usuario
+    const usuarioexiste = await pool.query('SELECT u.* FROM usuario u inner join persona p on u.id_usuario = p.id_persona where p.id_persona = $1', [id_persona]);
+    
+    if (usuarioexiste.rows.length > 0) {
+        res.status(200).json(
+            {
+                status: 201,
+                ok: false,
+                data:'',
+                message: "El usuario ya tiene clave generada",
+                error: null
+            }
+        );
+    }else {
+        const nuevoUsuario = await pool.query(
+            'INSERT INTO usuario (id_usuario, usuario, clave) VALUES ($1, $2, $3) RETURNING *',
+            [id_persona, usuario, hashedPassword]
+        );
+    
+        res.status(200).json(
+            {
+                status: 200,
+                ok: true,
+                data:nuevoUsuario.rows[0],
+                message: "Clave generada correctamente",
+                error: null
+            }
+        );
+    }
+    
+});
+
 // Ruta de login
 router.post('/login', async (req, res) => {
     const { usuario, clave } = req.body;
@@ -57,24 +104,90 @@ router.post('/login', async (req, res) => {
     // Verificar si el usuario existe
     const usuarioExistente = await pool.query('SELECT * FROM usuario WHERE usuario = $1', [usuario]);
     if (usuarioExistente.rows.length === 0) {
-        return res.status(400).json({ message: 'El usuario no existe o esta incorrecto' });
+        return res.status(400).json(
+            {
+                status: 400,
+                ok: false,
+                data:usuarioExistente,
+                token:token,
+                message: "El usuario no existe o esta incorrecto",
+                error: ''
+            }
+        );
     }
 
     // Comparar contraseñas
     const validClave = await bcrypt.compare(clave, usuarioExistente.rows[0].clave);
     if (!validClave) {
-        return res.status(400).json({ message: 'Clave incorrecta' });
+        return res.status(400).json(
+            {
+                status: 400,
+                ok: false,
+                data:usuarioExistente.rows[0],
+                token:token,
+                message: "Clave incorrecta",
+                error: validClave
+            }
+        );
     }
 
     // Crear y asignar token
     const token = jwt.sign({ id: usuarioExistente.rows[0].id_usuario }, 'secreto', { expiresIn: '1h' });
-    res.json({ token });
+    res.status(200).json(
+        {
+            status: 200,
+            ok: true,
+            data:usuarioExistente.rows[0],
+            token:token,
+            message: "Inicio exitoso",
+            error: null
+        }
+    );
 });
+
+
 
 // Ruta protegida para pruebas (requiere token)
 router.get('/perfil', verificarToken, async (req, res) => {
-    const usuario = await pool.query('SELECT * FROM usuario WHERE id_usuario = $1', [req.usuario_id]);
-    res.json(usuario.rows[0]);
+    const { persona_id } = req.body;
+    const usuario = await pool.query('SELECT u.* FROM usuario u inner join persona p on u.id_usuario = p.id_persona where p.id_persona = $1', [persona_id]);
+    
+    if (usuario.rows.length > 0) {
+        res.status(200).json(
+            {
+                status: 200,
+                ok: true,
+                data:usuario.rows[0],
+                message: "Busqueda exitosa",
+                error: null
+            }
+        );
+    }else {
+        res.status(201).json(
+            {
+                status: 201,
+                ok: false,
+                data:"",
+                message: "Usuario no tiene clave generada",
+                error: null
+            }
+        );
+    }
+
+    
+});
+
+router.get('/person', verificarToken, async (req, res) => {
+    const usuario = await pool.query('SELECT * FROM persona');
+    res.status(200).json(
+        {
+            status: 200,
+            ok: true,
+            data:usuario.rows,
+            message: "Carga exitosa",
+            error: null
+        }
+    );
 });
 
 // Middleware para verificar el token
